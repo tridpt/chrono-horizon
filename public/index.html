@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌌 ChronoHorizon — Khám Phá Bí Ẩn Vòng Lặp Thời Gian (Port 4140)</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!-- ========================================================================
+       1. THANH HUD TRÊN CÙNG (BUỒNG LÁI TỐI GIẢN, ĐỒNG HỒ LƯỢNG TỬ CÓ THANH TIẾN ĐỘ)
+       ======================================================================== -->
+  <header class="top-hud">
+    <div class="hud-left">
+      <div class="game-logo" title="ChronoHorizon // Mắt Ouroboros">
+        <svg viewBox="0 0 28 28" width="22" height="22" fill="none">
+          <ellipse cx="14" cy="14" rx="12" ry="5" transform="rotate(-24 14 14)" stroke="#a855f7" stroke-width="1.8" />
+          <ellipse cx="14" cy="14" rx="9.5" ry="3.6" transform="rotate(-24 14 14)" stroke="#38bdf8" stroke-width="1.3" />
+          <circle cx="14" cy="14" r="4.5" fill="#020617" stroke="#fde047" stroke-width="1.5" />
+        </svg>
+      </div>
+      <div class="hud-sector-wrap">
+        <span class="hud-micro-label">ACTIVE SECTOR // TELEMETRY</span>
+        <div class="hud-sector-badge" id="hudSectorTitle">
+          [SEC-01] Khoang Chỉ Huy &amp; Hộp Đen
+        </div>
+      </div>
+    </div>
+
+    <!-- Click vào cụm đồng hồ để mở Menu Điều Khiển Thời Gian / Pha -->
+    <div class="hud-center" onclick="openModal('modal-time')" title="Click để mở Bảng Điều Hòa 4 Pha & Vòng Lặp Thời Gian">
+      <div class="hud-clock-top">
+        <span class="loop-tag" id="loopBadge">CHU KỲ #1</span>
+        <span class="clock-text" id="clockDisplay">01:00 / 22:00</span>
+        <span class="phase-chip" id="phaseChip">🟢 Pha I</span>
+      </div>
+      <div class="hud-clock-track">
+        <div class="hud-clock-fill" id="clockProgressFill" style="width: 5%;"></div>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <button class="btn btn-primary hud-action-btn" id="btnMissionBriefing" onclick="window.ChronoUpgrades && window.ChronoUpgrades.openMissionBriefing()" title="Xem Giới thiệu Bối cảnh, Mục tiêu Trò chơi & Lộ trình 6 bước phá đảo">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="5" />
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        </svg>
+        <span>Mục Tiêu &amp; Hướng Dẫn</span>
+        <span class="obj-progress-pill" id="hudObjectiveBadge">0/6</span>
+      </button>
+      <button class="btn btn-warning hud-action-btn" onclick="advancePhase()" title="Tua nhanh sang Pha tiếp theo">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polygon points="5 4 15 12 5 20 5 4" />
+          <line x1="19" y1="5" x2="19" y2="19" />
+        </svg>
+        <span>Tua Pha Kế</span>
+      </button>
+      <button class="btn hud-action-btn" onclick="openModal('modal-settings')" title="Cài đặt, Sinh màn chơi mới & OSINT">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        <span>Menu Hệ Thống</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       2. SÂN KHẤU CHÍNH GIỮA MÀN HÌNH (CHỈ TẬP TRUNG VÀO CANVAS KHÁM PHÁ)
+       ======================================================================== -->
+  <main class="game-stage">
+    <div class="canvas-frame">
+      <!-- Cụm nút bên trái trên Canvas: 3 Chế độ Kính Quét Mũ Bảo Hiểm (Phím 1, 2, 3) -->
+      <div class="canvas-visor-modes">
+        <button class="visor-btn mode-normal active" id="visorBtn-NORMAL" onclick="setVisorMode('NORMAL')" title="Phím 1: Chế độ thị giác chuẩn">
+          <kbd class="visor-kbd">1</kbd>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M2 12c2.5-5 6-7.5 10-7.5S19.5 7 22 12c-2.5 5-6 7.5-10 7.5S4.5 17 2 12z" />
+          </svg>
+          <span>Kính Chuẩn</span>
+        </button>
+        <button class="visor-btn mode-thermal" id="visorBtn-THERMAL" onclick="setVisorMode('THERMAL')" title="Phím 2: Quét nhiệt ảnh hồng ngoại & đường cáp ngầm">
+          <kbd class="visor-kbd">2</kbd>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
+          </svg>
+          <span>Nhiệt Ảnh</span>
+        </button>
+        <button class="visor-btn mode-echo" id="visorBtn-ECHO" onclick="setVisorMode('ECHO')" title="Phím 3: Nhìn xuyên dư ảnh lượng tử & bóng ma phi hành đoàn">
+          <kbd class="visor-kbd">3</kbd>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="9" stroke-dasharray="3 3" />
+            <polygon points="12 6 16 12 12 18 8 12" />
+          </svg>
+          <span>Dư Ảnh Lượng Tử</span>
+        </button>
+      </div>
+
+      <!-- Nút nổi chuyển góc nhìn Khoang <-> Quỹ đạo <-> Bộ hành Không trọng lực EVA -->
+      <div class="canvas-floating-controls">
+        <button class="view-switch-btn active" id="btnViewRoom" onclick="setCanvasMode('ROOM')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span>Cảnh Trong Khoang</span>
+        </button>
+        <button class="view-switch-btn" id="btnViewOrbit" onclick="setCanvasMode('ORBIT')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+            <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-22 12 12)" />
+            <circle cx="12" cy="12" r="2.8" />
+          </svg>
+          <span>Sơ Đồ Toàn Trạm</span>
+        </button>
+        <button class="view-switch-btn eva-btn" id="btnViewEva" onclick="setCanvasMode('EVA')" title="Nhiệm vụ Bộ hành Không gian Không trọng lực ngoài vỏ trạm">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M6 20v-3a6 6 0 0 1 12 0v3" />
+            <path d="M4 13l-2 3M20 13l2 3" />
+          </svg>
+          <span>Bộ Hành EVA Zero-G</span>
+        </button>
+      </div>
+
+      <!-- Bảng Khám Nghiệm Cận Cảnh Vật Thể (Hiện lên khi Phi hành gia quét vật thể) -->
+      <div class="inspector-drawer" id="inspectorDrawer" style="display: none;">
+        <div class="inspector-header">
+          <strong id="inspTitle">🔍 Thiết Bị</strong>
+          <button class="inspector-close" onclick="closeInspectorDrawer()">✕</button>
+        </div>
+        <div class="inspector-body" id="inspBody"></div>
+        <div class="inspector-actions" id="inspActions"></div>
+      </div>
+
+      <!-- Bản đồ 2D Canvas chính -->
+      <canvas id="spaceCanvas" width="960" height="480"></canvas>
+
+      <!-- Các nút tương tác nhanh của căn phòng hiện tại nằm gọn dưới đáy Canvas -->
+      <div class="canvas-hotspot-pills" id="hotspotsStrip"></div>
+    </div>
+
+    <!-- THANH DẪN ĐƯỜNG MỤC TIÊU TRỰC TIẾP (LIVE MISSION TRACKER) -->
+    <div class="live-objective-banner" id="liveObjectiveBanner">
+      <div class="obj-banner-left">
+        <span class="obj-step-tag" id="objStepTag">🎯 MỤC TIÊU BƯỚC 1/6</span>
+        <span class="obj-step-desc" id="objStepDesc">Quét Sa Bàn Hologram tại [SEC-01] và thu hồi Đá Băng chứa Thẻ Từ Chỉ Huy.</span>
+      </div>
+      <div class="obj-banner-actions">
+        <button class="obj-go-btn" id="objGoBtn" onclick="window.ChronoUpgrades && window.ChronoUpgrades.executeCurrentObjective()">
+          <span>Thực Hiện Ngay</span>
+          <span>➔</span>
+        </button>
+        <button class="obj-guide-btn" onclick="window.ChronoUpgrades && window.ChronoUpgrades.openMissionBriefing()" title="Xem toàn bộ Cẩm nang Mục tiêu & Hướng dẫn 6 bước">
+          📜 Cẩm Nang 6 Bước
+        </button>
+      </div>
+    </div>
+
+    <!-- Hộp thoại Phụ đề Khám phá & Hỏi Đáp Trực Tiếp AI Trạm KRONOS-7 -->
+    <div class="narrative-bar">
+      <div class="narrative-comm-pod" onclick="window.ChronoUpgrades && window.ChronoUpgrades.toggleKronosConsole()" style="cursor: pointer;" title="Click để mở Trạm Hỏi Đáp AI KRONOS-7">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9" stroke-opacity="0.45" />
+          <path d="M4 12h3l2-4 3 8 2-6 2 2h4" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="comm-label">KRONOS-7</span>
+      </div>
+      <div class="narrative-text" id="narrativeText">
+        🛰️ <strong>Trạm Aethelgard-IX:</strong> Dùng chuột hoặc phím <strong>WASD</strong> điều khiển Phi hành gia. Bấm phím <strong>1 • 2 • 3</strong> đổi Kính Quét, hoặc thử <strong>Bộ Hành EVA Zero-G</strong>!
+      </div>
+      <div class="narrative-quick-btns">
+        <button class="comms-mini-btn" onclick="openModal('modal-lore'); switchLoreSubTab('rumor');" title="Mở Sơ đồ Mạng lưới Manh mối kiểu Outer Wilds">
+          🕸️ Mạng Manh Mối
+        </button>
+        <button class="comms-mini-btn highlight" onclick="window.ChronoUpgrades && window.ChronoUpgrades.toggleKronosConsole()" title="Hỏi đáp trực tiếp với AI KRONOS-7">
+          💬 Hỏi AI KRONOS-7
+        </button>
+      </div>
+      <div id="narrativeActionSlot"></div>
+    </div>
+
+    <!-- Ngăn Hỏi Đáp Nhanh AI KRONOS-7 (Thu gọn mặc định, mở khi bấm Hỏi AI KRONOS-7) -->
+    <div class="kronos-ask-drawer" id="kronosAskDrawer" style="display: none;">
+      <div class="kronos-chips-row">
+        <button class="kronos-chip" onclick="window.ChronoUpgrades.askKronosQuestion('gợi ý bước tiếp theo')">🎯 Bước kế tiếp?</button>
+        <button class="kronos-chip" onclick="window.ChronoUpgrades.askKronosQuestion('cách rã đông thẻ từ')">🧊 Rã đông thẻ?</button>
+        <button class="kronos-chip" onclick="window.ChronoUpgrades.askKronosQuestion('tọa độ 3 vòng tinh bàn')">🪐 3 góc Tinh bàn?</button>
+        <button class="kronos-chip" onclick="window.ChronoUpgrades.askKronosQuestion('cấu hình gương laser 5x5')">🔬 Gương Laser 5×5?</button>
+        <button class="kronos-chip" onclick="window.ChronoUpgrades.askKronosQuestion('nhiệm vụ bộ hành eva zero-g')">🧑‍🚀 Nhiệm vụ EVA?</button>
+      </div>
+      <div class="kronos-input-row">
+        <input type="text" id="kronosAskInput" class="kronos-input" placeholder="Nhập câu hỏi cho AI Trạm KRONOS-7 (VD: Làm sao mở Khoang Cổ Ngữ? Tọa độ Tinh Bàn?)..." />
+        <button class="btn btn-primary" onclick="window.ChronoUpgrades.askKronosQuestion()">📡 Phát Tín Hiệu Hỏi</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       3. THANH COMMAND DOCK DƯỚI ĐÁY (THIẾT KẾ BUỒNG LÁI SCI-FI HIỆN ĐẠI)
+       ======================================================================== -->
+  <nav class="bottom-dock">
+    <div class="dock-deck">
+      <button class="dock-btn theme-cyan" onclick="openModal('modal-sectors')">
+        <div class="dock-icon-pod">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9">
+            <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-20 12 12)" />
+            <circle cx="12" cy="12" r="3.2" />
+            <circle cx="19" cy="9.5" r="1.5" fill="currentColor" />
+          </svg>
+        </div>
+        <div class="dock-info">
+          <div class="dock-meta-row">
+            <span class="dock-code">NAV-01</span>
+            <span class="dock-badge" id="badgeSectors">3/6 mở</span>
+          </div>
+          <span class="dock-title">Chuyển Khoang</span>
+        </div>
+      </button>
+
+      <button class="dock-btn theme-amber" onclick="openModal('modal-inventory')">
+        <div class="dock-icon-pod">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9">
+            <path d="M12 2L3 7l9 5 9-5-9-5z" />
+            <path d="M3 17l9 5 9-5" />
+            <path d="M3 12l9 5 9-5" />
+          </svg>
+        </div>
+        <div class="dock-info">
+          <div class="dock-meta-row">
+            <span class="dock-code">CRAFT-02</span>
+            <span class="dock-badge" id="badgeInventory">0 món</span>
+          </div>
+          <span class="dock-title">Túi Đồ &amp; Ghép Đồ</span>
+        </div>
+      </button>
+
+      <button class="dock-btn theme-violet" id="dockBtn-glyphs" onclick="openModal('modal-glyphs')">
+        <div class="dock-icon-pod">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9">
+            <polygon points="12 2 19 9 12 22 5 9" />
+            <line x1="12" y1="2" x2="12" y2="22" />
+            <line x1="5" y1="9" x2="19" y2="9" />
+          </svg>
+        </div>
+        <div class="dock-info">
+          <div class="dock-meta-row">
+            <span class="dock-code">RUNE-03</span>
+            <span class="dock-badge" id="badgeGlyphs">6 ký tự</span>
+          </div>
+          <span class="dock-title">Giải Mã Cổ Ngữ</span>
+        </div>
+      </button>
+
+      <button class="dock-btn theme-indigo" id="dockBtn-astrolabe" onclick="openModal('modal-astrolabe')">
+        <div class="dock-icon-pod">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9">
+            <circle cx="12" cy="12" r="9.5" stroke-dasharray="4 2" />
+            <circle cx="12" cy="12" r="6" />
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+            <line x1="12" y1="2.5" x2="12" y2="6" />
+          </svg>
+        </div>
+        <div class="dock-info">
+          <div class="dock-meta-row">
+            <span class="dock-code">ASTRO-04</span>
+            <span class="dock-badge" id="badgeAstrolabe">3 vòng</span>
+          </div>
+          <span class="dock-title">Tinh Bàn 3 Vòng</span>
+        </div>
+      </button>
+
+      <button class="dock-btn theme-rose" id="dockBtn-optics" onclick="openModal('modal-optics')">
+        <div class="dock-icon-pod">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9">
+            <polygon points="12 3 21 19 3 19" />
+            <line x1="2" y1="12" x2="10" y2="11" />
+            <line x1="14" y1="10" x2="22" y2="6" />
+            <line x1="14" y1="12" x2="22" y2="14" />
+          </svg>
+        </div>
+        <div class="dock-info">
+          <div class="dock-meta-row">
+            <span class="dock-code">LASER-05</span>
+            <span class="dock-badge" id="badgeOptics">5 gương</span>
+          </div>
+          <span class="dock-title">Chiết Quang 5×5</span>
+        </div>
+      </button>
+
+      <button class="dock-btn theme-emerald" id="dockBtn-lore" onclick="openModal('modal-lore')">
+        <div class="dock-icon-pod">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9">
+            <rect x="3" y="4" width="18" height="16" rx="3" />
+            <circle cx="8.5" cy="12" r="2.2" />
+            <circle cx="15.5" cy="12" r="2.2" />
+            <line x1="8.5" y1="9.8" x2="15.5" y2="9.8" />
+          </svg>
+        </div>
+        <div class="dock-info">
+          <div class="dock-meta-row">
+            <span class="dock-code">CORE-06</span>
+            <span class="dock-badge" id="badgeLore">2/12 log</span>
+          </div>
+          <span class="dock-title">Hộp Đen &amp; Phá Án</span>
+        </div>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========================================================================
+       4. CÁC CỬA SỔ POPUP / MODAL (CHỈ HIỆN TỪNG PHẦN KHI NGƯỜI CHƠI BẤM NÚT)
+       ======================================================================== -->
+
+  <!-- MODAL A: CHUYỂN KHOANG TRẠM KHÔNG GIAN -->
+  <div class="modal-backdrop" id="modal-sectors" onclick="backdropClose(event, 'modal-sectors')">
+    <div class="modal-window" style="max-width: 880px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-title-pod">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-20 12 12)" />
+              <circle cx="12" cy="12" r="3" />
+              <circle cx="19" cy="9.5" r="1.5" fill="currentColor" />
+            </svg>
+          </span>
+          <div>
+            <div style="font-size: 0.65rem; font-family: var(--font-mono); color: var(--cyan); letter-spacing: 0.08em;">NAV-DECK // AETHELGARD-IX TELEPORT</div>
+            <div>Bản Đồ Di Chuyển 6 Khoang Trạm Không Gian</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕ Đóng (ESC)</button>
+      </div>
+      <div class="modal-body">
+        <div class="sector-modal-intro">
+          <span>Chọn khoang bạn muốn dịch chuyển tới. Các khoang khóa theo Pha sẽ tự động mở khi đồng hồ bước sang Pha II, III, IV hoặc khi mở Mật đạo Lượng tử:</span>
+          <button class="btn btn-primary" onclick="closeModal(false); setCanvasMode('ORBIT');">
+            🪐 Xem Sơ Đồ Quỹ Đạo Toàn Trạm
+          </button>
+        </div>
+        <div class="sector-grid" id="sectorList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL B: TÚI ĐỒ & XƯỞNG GHÉP VẬT PHẨM -->
+  <div class="modal-backdrop" id="modal-inventory" onclick="backdropClose(event, 'modal-inventory')">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-title-pod">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L3 7l9 5 9-5-9-5z" />
+              <path d="M3 17l9 5 9-5" />
+              <path d="M3 12l9 5 9-5" />
+            </svg>
+          </span>
+          <div>
+            <div style="font-size: 0.65rem; font-family: var(--font-mono); color: var(--gold); letter-spacing: 0.08em;">QUANTUM-CRAFT // WORKBENCH</div>
+            <div>Túi Đồ &amp; Xưởng Ghép Vật Phẩm Lượng Tử</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕ Đóng (ESC)</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+          <span style="font-size: 0.83rem; color: var(--text-muted);">
+            Click chọn 2 vật phẩm để ghép với nhau, hoặc bấm <strong>"⚡ Ghép Ngay"</strong> ở danh sách công thức bên dưới:
+          </span>
+          <button class="btn btn-primary" onclick="craftSelectedItems()">
+            🔗 Ghép 2 Món Đang Chọn
+          </button>
+        </div>
+        <div class="inventory-grid" id="inventoryGrid"></div>
+
+        <h4 style="font-size: 0.88rem; margin: 14px 0 8px; color: #bae6fd;">
+          📐 Công Thức Chế Tạo Thiết Bị
+        </h4>
+        <div id="recipeList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL C: CƠ QUAN 1 — GIẢI MÃ CỔ NGỮ NGOẠI TINH -->
+  <div class="modal-backdrop" id="modal-glyphs" onclick="backdropClose(event, 'modal-glyphs')">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-title-pod">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 19 9 12 22 5 9" />
+              <line x1="12" y1="2" x2="12" y2="22" />
+              <line x1="5" y1="9" x2="19" y2="9" />
+            </svg>
+          </span>
+          <div>
+            <div style="font-size: 0.65rem; font-family: var(--font-mono); color: #e9d5ff; letter-spacing: 0.08em;">XENO-CIPHER // MONOLITH TRANSLATOR</div>
+            <div>Cơ Quan 1: Giải Mã Cổ Ngữ Vẫn Tinh</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕ Đóng (ESC)</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;">
+          <span style="font-size: 0.83rem; color: var(--text-muted);">
+            Đối chiếu hình dạng của 6 ký tự cổ đại với gợi ý để giải mã tọa độ Vòng Ngoại Tinh Bàn:
+          </span>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-warning" onclick="autoSolveGlyphs()">
+              💡 Tự Điền Theo Từ Điển Sora
+            </button>
+            <button class="btn btn-success" onclick="submitGlyphs()">
+              ✅ Xác Nhận Bản Dịch
+            </button>
+          </div>
+        </div>
+        <div class="glyph-grid" id="glyphGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL D: CƠ QUAN 2 — TINH BÀN ĐIỀU HƯỚNG 3 VÒNG ĐỒNG TÂM -->
+  <div class="modal-backdrop" id="modal-astrolabe" onclick="backdropClose(event, 'modal-astrolabe')">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-title-pod">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9.5" stroke-dasharray="4 2" />
+              <circle cx="12" cy="12" r="6" />
+              <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+            </svg>
+          </span>
+          <div>
+            <div style="font-size: 0.65rem; font-family: var(--font-mono); color: var(--cyan); letter-spacing: 0.08em;">ASTRO-DIAL // CELESTIAL OBSERVATORY</div>
+            <div>Cơ Quan 2: Tinh Bàn Điều Hướng 3 Vòng Đồng Tâm</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕ Đóng (ESC)</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;">
+          <span style="font-size: 0.83rem; color: var(--text-muted);">
+            Xoay 3 vòng đồng tâm (Nội Tinh • Trung Nhật • Ngoại Dị Điểm) khớp với các góc tọa độ đã tìm thấy:
+          </span>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-warning" onclick="autoAlignAstrolabe()">
+              🧭 Tự Khớp Tọa Độ Chuẩn
+            </button>
+            <button class="btn btn-success" onclick="submitAstrolabe()">
+              🪐 Kích Hoạt Tinh Bàn
+            </button>
+          </div>
+        </div>
+        <div class="astrolabe-layout">
+          <div style="display: flex; justify-content: center;">
+            <canvas id="astrolabeCanvas" width="260" height="260" style="background: transparent; border-radius: 50%; box-shadow: 0 0 28px rgba(56, 189, 248, 0.22);"></canvas>
+          </div>
+          <div id="astrolabeControls"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL E: CƠ QUAN 3 — BÀN CHIẾT QUANG LƯỢNG TỬ 5x5 -->
+  <div class="modal-backdrop" id="modal-optics" onclick="backdropClose(event, 'modal-optics')">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-title-pod">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 3 21 19 3 19" />
+              <line x1="2" y1="12" x2="10" y2="11" />
+              <line x1="14" y1="10" x2="22" y2="6" />
+            </svg>
+          </span>
+          <div>
+            <div style="font-size: 0.65rem; font-family: var(--font-mono); color: #fb7185; letter-spacing: 0.08em;">PRISM-ARRAY // QUANTUM RAY-TRACING</div>
+            <div>Cơ Quan 3: Bàn Chiết Quang Lượng Tử 5×5</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕ Đóng (ESC)</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;">
+          <span style="font-size: 0.83rem; color: var(--text-muted);">
+            Click vào 5 Gương Xoay (<strong>M1..M5</strong>) để đổi góc <code>/</code>, <code>\</code>, <code>═</code> sao cho thắp sáng đủ 3 Cảm biến α, β, γ:
+          </span>
+          <button class="btn btn-warning" onclick="autoCalibrateOptics()">
+            🔦 Căn Chỉnh Chuẩn Theo Sổ Tay TS. Minh
+          </button>
+        </div>
+        <div class="optics-layout">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <canvas id="opticsCanvas" width="320" height="320" style="border-radius: 12px; border: 1px solid var(--border-bright); cursor: pointer;"></canvas>
+            <div class="optics-board" id="opticsBoard" style="display: none;"></div>
+          </div>
+          <div id="opticsTelemetryPanel"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL F: HỘP ĐEN, SUY LUẬN LỊCH SỬ & KÍCH HOẠT LÕI CHRONO-CORE -->
+  <div class="modal-backdrop" id="modal-lore" onclick="backdropClose(event, 'modal-lore')">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-title-pod">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="16" rx="3" />
+              <circle cx="8.5" cy="12" r="2.2" />
+              <circle cx="15.5" cy="12" r="2.2" />
+              <line x1="8.5" y1="9.8" x2="15.5" y2="9.8" />
+            </svg>
+          </span>
+          <div>
+            <div style="font-size: 0.65rem; font-family: var(--font-mono); color: var(--emerald); letter-spacing: 0.08em;">BLACKBOX // DEDUCTION &amp; CHRONO-CORE</div>
+            <div>Hồ Sơ Hộp Đen, Suy Luận Chân Tướng &amp; Lõi Chrono-Core</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕ Đóng (ESC)</button>
+      </div>
+      <div class="modal-body">
+        <!-- Chia thành 4 tab phân hệ bên trong Modal -->
+        <div class="sub-tabs four-cols">
+          <button class="sub-tab active" id="loreTabBtn-rumor" onclick="switchLoreSubTab('rumor')">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="6" cy="6" r="2.5" />
+              <circle cx="18" cy="7" r="2.5" />
+              <circle cx="12" cy="18" r="2.5" />
+              <path d="M8.2 7.2l7.5-.2M7.3 8.2l3.6 7.5M16.7 9.2l-3.6 6.6" />
+            </svg>
+            <span>Mạng Manh Mối</span>
+          </button>
+          <button class="sub-tab" id="loreTabBtn-logs" onclick="switchLoreSubTab('logs')">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <circle cx="8.5" cy="12" r="2" />
+              <circle cx="15.5" cy="12" r="2" />
+            </svg>
+            <span>Bản Ghi Hộp Đen</span>
+          </button>
+          <button class="sub-tab" id="loreTabBtn-deduction" onclick="switchLoreSubTab('deduction')">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" />
+              <circle cx="12" cy="16.8" r="0.8" fill="currentColor" />
+            </svg>
+            <span>Bảng Suy Luận</span>
+          </button>
+          <button class="sub-tab" id="loreTabBtn-core" onclick="switchLoreSubTab('core')">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(30 12 12)" />
+              <ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)" />
+            </svg>
+            <span>Lõi Chrono-Core</span>
+          </button>
+        </div>
+
+        <!-- Sub-pane 0: Sơ đồ Mạng lưới Manh mối (Outer Wilds Ship Log Rumor Graph) -->
+        <div id="lorePane-rumor">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; font-size:0.78rem; color:var(--text-muted);">
+            <span>Click vào từng nút trên Sơ Đồ Ký Ức Lượng Tử để tra cứu mối liên kết giữa Khoang, Cơ Quan &amp; Tọa Độ:</span>
+            <span style="font-family:var(--font-mono); font-size:0.7rem; color:#6ee7b7;">● Xanh lục: Đã giải &nbsp;|&nbsp; ● Xanh lam: Đã mở &nbsp;|&nbsp; 🔒 Xám: Bí ẩn khóa</span>
+          </div>
+          <canvas id="rumorGraphCanvas" width="890" height="400" style="width:100%; height:auto; border-radius:12px; border:1px solid rgba(56,189,248,0.35); margin-bottom:10px;"></canvas>
+          <div class="card-box" id="rumorNodeDetailBox" style="border-left:3px solid var(--cyan); background:rgba(8, 16, 36, 0.94);"></div>
+        </div>
+
+        <!-- Sub-pane 1: Danh sách Hộp đen & Mã đã biết -->
+        <div id="lorePane-logs" style="display: none;">
+          <div class="known-codes-banner" id="knownCodesBox"></div>
+          <div id="logsList" class="blackbox-logs-grid"></div>
+        </div>
+
+        <!-- Sub-pane 2: 4 câu hỏi Suy luận Lịch sử -->
+        <div id="lorePane-deduction" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <span style="font-size: 0.82rem; color: var(--text-muted);">
+              Trả lời 4 câu hỏi cốt lõi để mở khóa Giao Thức Cộng Sinh (<strong>PROTOCOL-HARMONY</strong>):
+            </span>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-warning" onclick="autoDeduceLore()">
+                💡 Tự Chọn Đáp Án Chuẩn
+              </button>
+              <button class="btn btn-success" onclick="submitDeduction()">
+                ✅ Xác Nhận Suy Luận
+              </button>
+            </div>
+          </div>
+          <div id="deductionList" class="deduction-grid"></div>
+        </div>
+
+        <!-- Sub-pane 3: Kích hoạt Lõi Chrono-Core (3 Endings) -->
+        <div id="lorePane-core" style="display: none;">
+          <div id="coreReadinessBar" class="core-readiness-bar"></div>
+          <div class="core-protocol-grid">
+            <button class="core-protocol-card harmony" onclick="activateChronoCore('HARMONY')">
+              <div class="core-proto-top">
+                <span class="core-proto-code">PROTOCOL // HARMONY</span>
+                <span class="core-proto-tag">TRUE ENDING</span>
+              </div>
+              <div class="core-proto-title">Cộng Hưởng Dị Điểm Ouroboros</div>
+              <div class="core-proto-desc">
+                Đồng bộ 3 Cơ Quan + Chân tướng Lịch sử để giải phóng toàn bộ phi hành đoàn khỏi bong bóng thời gian 22 phút.
+              </div>
+            </button>
+
+            <button class="core-protocol-card containment" onclick="activateChronoCore('CONTAINMENT')">
+              <div class="core-proto-top">
+                <span class="core-proto-code">PROTOCOL // CONTAINMENT</span>
+                <span class="core-proto-tag">ENDING B</span>
+              </div>
+              <div class="core-proto-title">Phong Ấn Chân Trời Sự Kiện</div>
+              <div class="core-proto-desc">
+                Đóng băng vĩnh viễn hạt nhân Dị điểm để bảo vệ Hệ Mặt Trời, chấp nhận neo Trạm Aethelgard-IX ngoài không gian sâu.
+              </div>
+            </button>
+
+            <button class="core-protocol-card overload" onclick="activateChronoCore('OVERLOAD')">
+              <div class="core-proto-top">
+                <span class="core-proto-code">PROTOCOL // OVERLOAD</span>
+                <span class="core-proto-tag">PARADOX ENDING</span>
+              </div>
+              <div class="core-proto-title">Kích Nổ Nghịch Lý Lượng Tử</div>
+              <div class="core-proto-desc">
+                Cưỡng bức xả toàn bộ năng lượng Tachyon khi chưa đủ khóa an toàn, xé toạc vòng lặp bằng xung phản vật chất.
+              </div>
+            </button>
+          </div>
+          <div id="endingDisplayArea"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL G: ĐIỀU KHIỂN ĐỒNG HỒ VÒNG LẶP & 4 PHA THỜI GIAN -->
+  <div class="modal-backdrop" id="modal-time" onclick="backdropClose(event, 'modal-time')">
+    <div class="modal-window" style="max-width: 660px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-title-pod">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9" />
+              <polyline points="12 7 12 12 15.5 14" />
+            </svg>
+          </span>
+          <div>
+            <div style="font-size: 0.65rem; font-family: var(--font-mono); color: var(--gold); letter-spacing: 0.08em;">CHRONO-LOOP // 22-MINUTE REGULATOR</div>
+            <div>Bộ Điều Hòa Vòng Lặp Thời Gian 22 Phút &amp; 4 Pha</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕ Đóng (ESC)</button>
+      </div>
+      <div class="modal-body">
+        <div class="card-box" style="border-left: 3px solid var(--cyan); background: rgba(12, 22, 46, 0.92);">
+          <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 4px; color: #f8fafc;" id="modalPhaseTitle">🟢 Pha I: Quỹ Đạo Tĩnh</div>
+          <div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.45;" id="modalPhaseDesc"></div>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+          Mỗi Pha làm biến đổi trạng thái băng giá Nitơ và trọng trường Dị điểm trên trạm. Chọn Pha bạn muốn nhảy tới:
+        </p>
+        <div class="phase-grid-cards">
+          <button class="phase-jump-card p1" onclick="setPhase(1)">
+            <div class="phase-jump-top">
+              <span class="phase-jump-badge">PHA I</span>
+              <span class="phase-jump-time">00:00 – 06:00</span>
+            </div>
+            <div class="phase-jump-name">Quỹ Đạo Tĩnh</div>
+            <div class="phase-jump-sub">Mở Chỉ Huy, Thủy Canh &amp; Lab Quang Học</div>
+          </button>
+
+          <button class="phase-jump-card p2" onclick="setPhase(2)">
+            <div class="phase-jump-top">
+              <span class="phase-jump-badge">PHA II</span>
+              <span class="phase-jump-time">06:00 – 12:00</span>
+            </div>
+            <div class="phase-jump-name">Bão Từ Mặt Trời Đôi</div>
+            <div class="phase-jump-sub">Tan băng Đài Tinh Bàn &amp; Nạp Dư Ảnh</div>
+          </button>
+
+          <button class="phase-jump-card p3" onclick="setPhase(3)">
+            <div class="phase-jump-top">
+              <span class="phase-jump-badge">PHA III</span>
+              <span class="phase-jump-time">12:00 – 18:00</span>
+            </div>
+            <div class="phase-jump-name">Lệch Trọng Trường</div>
+            <div class="phase-jump-sub">Nâng đá mở lối Khoang Cổ Ngữ (SEC-05)</div>
+          </button>
+
+          <button class="phase-jump-card p4" onclick="setPhase(4)">
+            <div class="phase-jump-top">
+              <span class="phase-jump-badge">PHA IV</span>
+              <span class="phase-jump-time">18:00 – 22:00</span>
+            </div>
+            <div class="phase-jump-name">Chân Trời Sự Kiện Mở</div>
+            <div class="phase-jump-sub">Mở khóa Lõi Thời Gian Chrono-Core!</div>
+          </button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 14px;">
+          <button class="btn btn-primary" onclick="resetLoop()">
+            🔄 Tái Khởi Động Vòng Lặp Mới (Giữ Nguyên 100% Ký Ức &amp; Hộp Đen)
+          </button>
+          <button class="btn" id="btnAutoClock" onclick="toggleAutoClock()">
+            ⏸️ Đồng Hồ: TỰ ĐỘNG
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL H: MENU HỆ THỐNG & CÀI ĐẶT -->
+  <div class="modal-backdrop" id="modal-settings" onclick="backdropClose(event, 'modal-settings')">
+    <div class="modal-window" style="max-width: 620px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-title-pod">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </span>
+          <div>
+            <div style="font-size: 0.65rem; font-family: var(--font-mono); color: var(--cyan); letter-spacing: 0.08em;">SYS-CONFIG // AETHELGARD-IX</div>
+            <div>Menu Hệ Thống &amp; Tùy Chọn Chiến Dịch</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕ Đóng (ESC)</button>
+      </div>
+      <div class="modal-body">
+        <div class="sys-card-list">
+          <!-- Card 1: Âm thanh Web Audio Synth -->
+          <button class="sys-action-card theme-cyan" id="btnSound" onclick="toggleSound()">
+            <div class="sys-card-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            </div>
+            <div class="sys-card-content">
+              <div class="sys-card-title">Âm Thanh Vũ Trụ (Web Audio Synthesizer)</div>
+              <div class="sys-card-desc">Tổng hợp hiệu ứng âm thanh tia quét lượng tử, xoay tinh bàn &amp; bước nhảy pha</div>
+            </div>
+            <span class="sys-status-pill on" id="soundStatusPill">● ĐANG BẬT</span>
+          </button>
+
+          <!-- Card 2: Sinh Chiến Dịch Dị Điểm Vũ Trụ Ngẫu Nhiên -->
+          <button class="sys-action-card theme-violet" onclick="generateProceduralCampaign(); closeModal();">
+            <div class="sys-card-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 21 7 21 17 12 22 3 17 3 7" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 2v7M21 7l-6.4 3.5M21 17l-6.4-3.5M12 22v-7M3 17l6.4-3.5M3 7l6.4 3.5" />
+              </svg>
+            </div>
+            <div class="sys-card-content">
+              <div class="sys-card-title">Sinh Chiến Dịch Dị Điểm Vũ Trụ Ngẫu Nhiên Mới</div>
+              <div class="sys-card-desc">Tạo mới toàn bộ tọa độ Tinh Bàn, cấu hình gương Laser &amp; mật mã Cổ ngữ để chơi lại</div>
+            </div>
+            <span class="sys-action-badge violet">KHỞI TẠO ➔</span>
+          </button>
+
+          <!-- Card 3: Liên thông OmniTrace OSINT -->
+          <button class="sys-action-card theme-emerald" onclick="exportToOsint()">
+            <div class="sys-card-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" />
+                <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" />
+                <circle cx="12" cy="12" r="2" />
+                <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" />
+                <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19" />
+              </svg>
+            </div>
+            <div class="sys-card-content">
+              <div class="sys-card-title">Đẩy Tín Hiệu Dị Điểm &amp; Hộp Đen Sang OmniTrace OSINT</div>
+              <div class="sys-card-desc">Đồng bộ hồ sơ Hộp đen &amp; nhật ký lượng tử sang cổng điều tra OSINT (Port 4090)</div>
+            </div>
+            <span class="sys-action-badge emerald">ĐỒNG BỘ ➔</span>
+          </button>
+        </div>
+
+        <div class="sys-log-header">
+          <div class="sys-log-title">
+            <span class="pulse-dot"></span>
+            <span>NHẬT KÝ VÒNG LẶP LƯỢNG TỬ GẦN ĐÂY</span>
+          </div>
+          <span class="sys-log-sub">CHRONO-TELEMETRY LOG</span>
+        </div>
+        <div class="sys-timeline-box" id="loopHistoryList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL I: CẨM NANG CHIẾN DỊCH, MỤC TIÊU TRÒ CHƠI & LỘ TRÌNH 6 BƯỚC PHÁ ĐẢO -->
+  <div class="modal-backdrop" id="modal-briefing" onclick="backdropClose(event, 'modal-briefing')">
+    <div class="modal-window" style="max-width: 920px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="modal-title-pod">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="5" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            </svg>
+          </span>
+          <div>
+            <div style="font-size: 0.65rem; font-family: var(--font-mono); color: var(--cyan); letter-spacing: 0.08em;">MISSION BRIEFING // OPERATION OUROBOROS</div>
+            <div>Giới Thiệu Bối Cảnh, Mục Tiêu Trò Chơi &amp; Lộ Trình 6 Bước Phá Đảo</div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">✕ Đóng (ESC)</button>
+      </div>
+      <div class="modal-body">
+        <!-- 1. BỐI CẢNH & MỤC TIÊU TỐI THƯỢNG -->
+        <div class="briefing-hero-card">
+          <div class="briefing-hero-header">
+            <span class="briefing-badge">🌌 BỐI CẢNH &amp; SỨ MỆNH TỐI THƯỢNG</span>
+            <span class="briefing-progress-summary" id="briefingProgressSummary">Tiến độ Chiến dịch: 0/6 Bước hoàn tất</span>
+          </div>
+          <p class="briefing-story-p">
+            Năm 2189, Trạm nghiên cứu không gian sâu <strong>Aethelgard-IX</strong> bị mắc kẹt trong <strong>Vòng lặp Thời gian 22 phút</strong> ngay rìa chân trời sự kiện của Hố đen Siêu khối lượng <strong>Gargantua (Mắt Ouroboros)</strong>. Cứ đúng phút <code>22:00</code>, Dị điểm phát nổ Siêu Tân Tinh và đưa đồng hồ về <code>00:00</code>.
+          </p>
+          <div class="briefing-goal-pillars">
+            <div class="goal-pillar">
+              <div class="goal-pillar-title">🎯 Mục Tiêu Tối Thượng</div>
+              <div class="goal-pillar-desc">Giải mã <strong>3 Cơ Quan Lượng Tử</strong> (Cổ Ngữ • Tinh Bàn • Laser 5×5) và chế tạo <strong>2 Thiết Bị Bền Vững</strong> (Lăng Kính Hội Tụ • Lõi Pin Sạc Đầy) để mở khóa <strong>[SEC-06] Lõi Thời Gian</strong>, cứu sống 4 thành viên phi hành đoàn và phá vỡ vòng lặp.</div>
+            </div>
+            <div class="goal-pillar">
+              <div class="goal-pillar-title">♾️ Quy Luật Vòng Lặp 22 Phút</div>
+              <div class="goal-pillar-desc">Nhờ Trường Neo Ký Ức của Hộp Đen, <strong>mọi vật phẩm bền vững đã ghép, mật mã đã tìm thấy, cổ ngữ đã dịch và nhật ký đã đọc đều ĐƯỢC GIỮ NGUYÊN</strong> qua các chu kỳ! Đừng sợ khi đồng hồ chạm 22:00.</div>
+            </div>
+            <div class="goal-pillar">
+              <div class="goal-pillar-title">⏱️ Cơ Chế 4 Pha Thời Gian</div>
+              <div class="goal-pillar-desc">Một số khoang chỉ mở ở Pha cụ thể: <strong>Pha II (06:00)</strong> băng tan mở Đài Quan Sát; <strong>Pha III (12:00)</strong> mở Khoang Cổ Ngữ; <strong>Pha IV (18:00)</strong> mở Lõi Thời Gian. Bấm nút <strong>"Tua Pha Kế"</strong> bất cứ lúc nào!</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. LỘ TRÌNH 6 BƯỚC PHÁ ĐẢO TRỰC TIẾP (CẬP NHẬT THEO TIẾN ĐỘ THẬT) -->
+        <div class="briefing-section-head">
+          <h4>🗺️ Lộ Trình 6 Bước Phá Đảo (Tự Động Đánh Dấu Theo Tiến Độ Của Bạn)</h4>
+          <span>Bấm vào nút bên phải mỗi bước để nhảy thẳng tới địa điểm / công cụ cần làm</span>
+        </div>
+        <div class="briefing-checklist-grid" id="briefingChecklistGrid"></div>
+
+        <!-- 3. HƯỚNG DẪN ĐIỀU KHIỂN & 3 CHẾ ĐỘ KÍNH MŨ BẢO HIỂM -->
+        <div class="briefing-section-head" style="margin-top: 16px;">
+          <h4>🎮 Hướng Dẫn Điều Khiển &amp; Công Cụ Thám Tử Không Gian</h4>
+          <span>Sử dụng linh hoạt 3 chế độ Kính Quét trên Mũ Bảo Hiểm để phát hiện manh mối ẩn</span>
+        </div>
+        <div class="briefing-controls-grid">
+          <div class="control-guide-card">
+            <div class="cg-title"><kbd>Chuột</kbd> / <kbd>WASD</kbd> Di Chuyển &amp; Quét</div>
+            <div class="cg-desc">Click vào các huy hiệu bát giác trên màn hình hoặc bấm các nút dưới đáy Canvas để Phi hành gia tiến tới khảo sát và thu thập vật phẩm.</div>
+          </div>
+          <div class="control-guide-card">
+            <div class="cg-title"><kbd>Phím 1</kbd> Kính Chuẩn (Standard)</div>
+            <div class="cg-desc">Quan sát rõ ràng kết cấu khoang tàu, thu nhặt vật phẩm vật lý, đọc bảng điều khiển và vận hành máy móc.</div>
+          </div>
+          <div class="control-guide-card">
+            <div class="cg-title"><kbd>Phím 2</kbd> Nhiệt Ảnh (Thermal IR)</div>
+            <div class="cg-desc">Phát hiện nguồn nhiệt bất thường, đường cáp ngầm dưới sàn và các vết nứt ống dẫn Plasma ngoài vỏ trạm.</div>
+          </div>
+          <div class="control-guide-card">
+            <div class="cg-title"><kbd>Phím 3</kbd> Dư Ảnh Lượng Tử (Echo)</div>
+            <div class="cg-desc">Nhìn xuyên thời gian để nghe lại <strong>Bóng ma Ký ức</strong> của 4 thành viên phi hành đoàn và đọc các mật mã ẩn trên vách trạm!</div>
+          </div>
+        </div>
+
+        <div class="briefing-footer-bar">
+          <span style="font-size: 0.78rem; color: var(--text-muted);">💡 Mẹo: Khi bí đường, bạn luôn có thể bấm nút <strong>💬 Hỏi AI KRONOS-7</strong> hoặc xem <strong>🕸️ Mạng Manh Mối</strong>!</span>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="closeModal(); window.ChronoUpgrades && window.ChronoUpgrades.executeCurrentObjective();">
+              🚀 Thực Hiện Bước Tiếp Theo Ngay
+            </button>
+            <button class="btn btn-success" onclick="closeModal()">
+              ✅ Đã Hiểu, Vào Khám Phá
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MÀN HÌNH ĐIỆN ẢNH TOÀN MÀN HÌNH 60FPS: VỤ NỔ SIÊU TÂN TINH 22:00 & EPILOGUE 3 KẾT CỤC -->
+  <div class="cinematic-overlay" id="cinematicOverlay">
+    <canvas id="cinematicCanvas"></canvas>
+
+    <!-- HUD Tua Ngược Siêu Tân Tinh 22:00 -> 00:00 -->
+    <div class="cinematic-supernova-hud" id="cinematicSupernovaHud" style="display: none;">
+      <div class="cine-stage-tag" id="cineSupernovaStage">💥 SUPERNOVA DETONATION</div>
+      <div class="cine-clock-big" id="cineSupernovaClock">22:00</div>
+      <div class="cine-sub-text" id="cineSupernovaSub">Đang kích hoạt Trường Neo Ký Ức Lượng Tử...</div>
+      <button class="btn" style="margin-top: 14px;" onclick="window.ChronoUpgrades.closeCinematic()">
+        ⏭ Bỏ Qua Cảnh Quay (ESC)
+      </button>
+    </div>
+
+    <!-- Thẻ Epilogue Toàn Màn Hình Khi Mở Khóa 1 Trong 3 Kết Cục -->
+    <div class="cinematic-epilogue-card" id="cinematicEpilogueCard" style="display: none;"></div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast-notification" id="toastBox"></div>
+
+  <script src="/graphics.js"></script>
+  <script src="/app.js"></script>
+  <script src="/chrono-upgrades.js"></script>
+</body>
+</html>

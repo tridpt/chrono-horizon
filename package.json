@@ -1,0 +1,21 @@
+{
+  "name": "chrono-horizon",
+  "version": "1.0.0",
+  "description": "ChronoHorizon — Game Khám Phá Bí Ẩn Trạm Không Gian Bỏ Hoang & Vòng Lặp Thời Gian 22 Phút (Port 4140)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test_server.js"
+  },
+  "keywords": [
+    "chrono-horizon",
+    "time-loop-mystery",
+    "deep-space-exploration",
+    "astrolabe-puzzle",
+    "quantum-optics",
+    "xeno-glyphs",
+    "lore-deduction"
+  ],
+  "author": "AI_App Ecosystem",
+  "license": "MIT"
+}
